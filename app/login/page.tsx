@@ -1,124 +1,72 @@
 "use client";
-
 import { useState } from "react";
+import { auth } from "@/app/login/firebase";
+import { signInAnonymously } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "./firebase";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
+  const handleGuestLogin = async () => {
     setLoading(true);
-
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      setSuccess(true);
-
-      // تحويل بعد ثانيتين
-      setTimeout(() => {
-        router.push("/chat");
-      }, 1500);
-    } catch (err: any) {
-      if (err.code === "auth/wrong-password") {
-        setError("Incorrect password");
-      } else if (err.code === "auth/user-not-found") {
-        setError("No account found with this email");
-      } else {
-        setError("Login failed. Please try again.");
-      }
+      const userCredential = await signInAnonymously(auth);
+      const user = userCredential.user;
+      
+      const shortId = user.uid.substring(0, 6).toUpperCase();
+      localStorage.setItem("display_name", `User_${shortId}`);
+      
+      router.push("/chat");
+    } catch (error) {
+      console.error("Error signing in anonymously:", error);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left */}
-      <div className="hidden md:flex w-1/3 bg-red-600 text-white flex-col justify-between p-8">
-        <div className="text-2xl font-bold">Moment</div>
-        <p className="text-red-100">Snap and share with friends →</p>
-      </div>
+    <div className="min-h-screen bg-[#0b0e14] flex flex-col items-center justify-center relative overflow-hidden p-6">
+      
+      {/* تأثير ضوئي في الخلفية (Glow) */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-yellow-400/10 blur-[120px] rounded-full -z-10"></div>
 
-      {/* Right */}
-      <div className="flex-1 flex items-center justify-center bg-blue-800">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-center mb-6 text-red-500">
-            Sign into your account
-          </h2>
-
-          {/* Success message */}
-          {success && (
-            <div className="mb-4 rounded-md bg-green-500 text-white px-4 py-2 text-sm">
-              ✅ Logged in successfully!
-            </div>
-          )}
-
-          {/* Error message */}
-          {error && (
-            <div className="mb-4 rounded-md bg-red-100 text-red-600 px-4 py-2 text-sm">
-              ❌ {error}
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email */}
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              className="w-full rounded-md border px-3 py-2 text-black focus:ring-2 focus:ring-red-500"
-            />
-
-            {/* Password */}
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full rounded-md border px-3 py-2 pr-10 text-black focus:ring-2 focus:ring-red-500"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-2 text-gray-500"
-              >
-                {showPassword ? "🙈" : "👁️"}
-              </button>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-red-500 text-white py-2 rounded-md font-semibold hover:bg-red-600 transition disabled:opacity-60"
-            >
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
-          </form>
-
-          <p className="text-center text-sm text-gray-600 mt-4">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-red-500 font-semibold">
-              Create one
-            </Link>
-          </p>
+      {/* اللوجو بأنيميشن */}
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="mb-12 text-center"
+      >
+        <div className="w-24 h-24 bg-[#FFFC00] rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-yellow-400/20 mx-auto mb-6 rotate-[-5deg]">
+          <span className="text-5xl">👻</span>
         </div>
-      </div>
+        <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">Moment</h1>
+        <p className="text-white/40 mt-2 font-medium tracking-widest text-xs uppercase">Private Ghost Chat</p>
+      </motion.div>
+
+      {/* الزرار بتاعك بستايل سناب شات */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="w-full max-w-sm"
+      >
+        <button
+          onClick={handleGuestLogin}
+          disabled={loading}
+          className="w-full relative group p-5 bg-[#FFFC00] text-black font-black rounded-3xl shadow-[0_20px_40px_rgba(255,252,0,0.15)] hover:shadow-[0_25px_50px_rgba(255,252,0,0.3)] transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+        >
+          <span className="flex items-center justify-center gap-3 text-lg">
+            {loading ? "جاري التحقق..." : "دخول سريع كـ شبح 👻"}
+          </span>
+        </button>
+        
+        <p className="text-white/30 text-[10px] text-center mt-6 uppercase tracking-widest leading-relaxed">
+          بضغطك على الدخول، سيتم إنشاء هويتك السرية <br /> وتشفير محادثاتك فوراً
+        </p>
+      </motion.div>
+
     </div>
   );
 }

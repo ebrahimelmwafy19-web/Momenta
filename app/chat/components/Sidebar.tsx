@@ -1,19 +1,38 @@
-export default function Sidebar() {
+"use client";
+import { db, auth } from "@/app/login/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+
+export default function SidebarHeader() {
+  const router = useRouter();
+
+  const createRoom = async () => {
+    try {
+      // إنشاء وثيقة جديدة في مجموعة الـ chats
+      const docRef = await addDoc(collection(db, "chats"), {
+        createdAt: serverTimestamp(),
+        createdBy: auth.currentUser?.uid,
+        name: "New Moment", // اسم افتراضي
+      });
+
+      // توجيه المستخدم لعنوان الغرفة الجديد (مثلاً /chat/ID_الغرفة)
+      router.push(`/chat/${docRef.id}`);
+    } catch (error) {
+      console.error("Error creating room:", error);
+    }
+  };
+
   return (
-    <aside className="w-72 bg-blue-800 border-r border-blue-700 p-4">
-      <h2 className="text-sm font-semibold text-red-400 mb-3">Friends Streak</h2>
-
-      <div className="bg-blue-900 p-3 rounded-md mb-4 hover:bg-blue-700 transition cursor-pointer">
-        <p className="text-sm font-medium">Streak with IEySoB</p>
-        <p className="text-xs text-gray-300">Nothing yet...</p>
-      </div>
-
-      <h2 className="text-sm font-semibold text-red-400 mb-3">Group Chats</h2>
-
-      <div className="bg-blue-900 p-3 rounded-md hover:bg-blue-700 transition cursor-pointer">
-        <p className="text-sm font-medium">Streak with IEySoB</p>
-        <p className="text-xs text-gray-300">2 members, 1 online</p>
-      </div>
-    </aside>
+    <div className="flex flex-col gap-4 p-4">
+      <h1 className="text-[#FFFC00] text-3xl font-black italic">MOMENT</h1>
+      
+      {/* الزرار الجديد بتصميم يتماشى مع الـ UI بتاعك */}
+      <button 
+        onClick={createRoom}
+        className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-white/60 text-xs font-bold uppercase tracking-widest hover:bg-[#FFFC00] hover:text-black hover:border-[#FFFC00] transition-all duration-300 shadow-lg"
+      >
+        + Create a New Moment
+      </button>
+    </div>
   );
 }

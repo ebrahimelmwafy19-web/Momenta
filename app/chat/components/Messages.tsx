@@ -1,53 +1,54 @@
 "use client";
-
-import { useMessages } from "../hooks/useMessage";
-import { useTyping } from "../hooks/useTyping";
+import { useMessages } from "../hooks/useMessage"; 
+import MessageBubble from "./MessageBubble";
 import { auth } from "@/app/login/firebase";
+import { useEffect, useRef } from "react";
 
-export default function Messages() {
-  const chatId = "global-chat";
-  const messages = useMessages(chatId);
-  const { typingUsers } = useTyping(chatId);
-  const userId = auth.currentUser?.uid;
+// 1. ضيف الـ Interface هنا
+interface MessagesProps {
+  roomId: string;
+}
+
+// 2. استقبل الـ roomId في المكون
+export default function Messages({ roomId }: MessagesProps) {
+  // 3. مرر الـ roomId للـ Hook (تأكد إن الـ Hook بتاعك بيدعم ده)
+  const { messages, loading } = useMessages(roomId); 
+  
+  const currentUser = auth.currentUser;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center opacity-30 animate-pulse">
+      جاري تحميل المحادثة...
+    </div>
+  );
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto bg-blue-900 px-6 py-4">
-      {/* container مركزي زي Telegram */}
-      <div className="mx-auto w-full max-w-3xl flex flex-col gap-3">
-        {messages.length === 0 && (
-          <div className="text-center text-blue-200 mt-20">
-            No messages yet
-          </div>
-        )}
+    <div className="flex flex-col py-4 overflow-y-auto custom-scrollbar h-full">
+{messages.map((msg: any) => (
+  <MessageBubble 
+    key={msg.id}
+    id={msg.id} // هنحتاج الـ id عشان المسح
+    text={msg.text} 
+    audioUrl={msg.audioUrl} 
+    type={msg.type || "text"} // لو مفيش نوع، اعتبره نص افتراضياً
+    isMe={msg.senderId === currentUser?.uid} 
+    time={msg.timestamp?.toDate().toLocaleTimeString()} 
+  />
+))}
+      
+      <div ref={scrollRef} />
 
-        {messages.map((msg) => {
-          const mine = msg.senderId === userId;
-
-          return (
-            <div
-              key={msg.id}
-              className={`flex ${mine ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`px-4 py-2 rounded-2xl text-sm shadow max-w-[70%] break-words ${
-                  mine
-                    ? "bg-red-600 text-white"
-                    : "bg-blue-700 text-white"
-                }`}
-              >
-                {msg.text}
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Typing */}
-        {typingUsers.length > 0 && (
-          <div className="text-sm text-blue-300 italic">
-            Typing...
-          </div>
-        )}
-      </div>
+      {messages.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-full opacity-20">
+          <span className="text-6xl mb-4">👻</span>
+          <p className="font-bold tracking-widest uppercase">Start a Secret Chat</p>
+        </div>
+      )}
     </div>
   );
 }

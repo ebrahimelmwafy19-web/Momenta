@@ -1,31 +1,35 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { useState, useEffect } from "react";
 import { db } from "@/app/login/firebase";
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
-export function useMessages(chatId: string) {
+export function useMessages(roomId: string) {
   const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. حماية: لو الـ roomId مش موجود، اخرج ومتعملش Query
+    if (!roomId) {
+      setLoading(false);
+      return;
+    }
+
     const q = query(
-      collection(db, "chats", chatId, "messages"),
-      orderBy("createdAt", "desc") // 👈 الأحدث فوق
+      collection(db, "messages"),
+      where("roomId", "==", roomId),
+      orderBy("timestamp", "asc")
     );
 
-    return onSnapshot(q, (snapshot) => {
-      const now = Date.now();
-
-      const filtered = snapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((msg: any) => {
-          if (!msg.expiresAt) return true;
-          return msg.expiresAt.toMillis() > now; // 👈 لسه صالح
-        });
-
-      setMessages(filtered);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setMessages(msgs);
+      setLoading(false);
     });
-  }, [chatId]);
 
-  return messages;
+    return () => unsubscribe();
+  }, [roomId]); // الـ useEffect هيشتغل تاني أول ما الـ roomId ياخد قيمة
+
+  return { messages, loading };
 }

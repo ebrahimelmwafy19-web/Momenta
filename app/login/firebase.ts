@@ -3,6 +3,12 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+// 1. استيراد وظيفة الـ Storage
+import { getStorage } from "firebase/storage";
+
+// ... (باقي تعريفات الـ auth والـ db)
+
+// 2. تعريف الـ storage وتصديره
 
 const firebaseConfig = {
   apiKey: "AIzaSyCIPu24uWdmg72f9wDpKosnF-oUnvimpI0",
@@ -21,3 +27,4 @@ export const auth = getAuth(app);
 
 // 🔥 Firestore (ده اللي كان ناقصك)
 export const db = getFirestore(app);
+export const storage = getStorage(app);
