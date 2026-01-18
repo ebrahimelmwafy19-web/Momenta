@@ -1,6 +1,6 @@
 import React from "react";
 // تأكد من استيراد المكونات بالمسار الصحيح (نقطتين للرجوع للخلف)
-import Sidebar from "../components/Sidebar"; 
+import Sidebar from "../../components/Sidebar"; 
 
 export default function ChatLayout({
   children,
